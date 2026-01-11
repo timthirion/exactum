@@ -3,9 +3,11 @@
 pub mod boolean;
 mod convex_hull;
 mod delaunay;
+mod kdtree;
 pub mod sweep;
 mod voronoi;
 
 pub use convex_hull::graham_scan;
 pub use delaunay::{delaunay, Triangle, Triangulation};
+pub use kdtree::{KdTree2, KdTree3, NearestResult};
 pub use voronoi::{voronoi, voronoi_from_delaunay, VoronoiDiagram, VoronoiEdge, VoronoiVertex};
