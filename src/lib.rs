@@ -18,6 +18,7 @@
 //!
 //! - [`algo::graham_scan`] - Convex hull via Graham scan
 //! - [`algo::delaunay`] - Delaunay triangulation via Bowyer-Watson
+//! - [`algo::voronoi`] - Voronoi diagram (dual of Delaunay)
 //!
 //! # Traits
 //!
