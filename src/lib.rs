@@ -7,9 +7,23 @@
 //!
 //! - [`Point2`] and [`Point3`] - 2D and 3D points
 //! - [`Vector2`] and [`Vector3`] - 2D and 3D displacement vectors
+//!
+//! # Predicates
+//!
+//! - [`predicates::orient2d`] - Orientation test for three 2D points
+//! - [`predicates::incircle`] - In-circle test for four 2D points
+//! - [`predicates::collinear`] - Collinearity test
+//!
+//! # Traits
+//!
+//! - [`Widen`] - Integer widening for overflow-safe multiplication
 
 mod point;
 mod vector;
+mod widen;
+
+pub mod predicates;
 
 pub use point::{Point2, Point3};
 pub use vector::{Vector2, Vector3};
+pub use widen::{Wide, Widen};
