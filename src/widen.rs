@@ -35,6 +35,9 @@ pub trait Wide:
     /// The narrow type this is widened from.
     type Narrow: Widen<Wide = Self>;
 
+    /// Returns the zero value.
+    fn zero() -> Self;
+
     /// Compare to zero and return ordering.
     fn sign(&self) -> Ordering;
 }
@@ -54,6 +57,11 @@ impl Widen for i32 {
 
 impl Wide for i64 {
     type Narrow = i32;
+
+    #[inline]
+    fn zero() -> Self {
+        0
+    }
 
     #[inline]
     fn sign(&self) -> Ordering {
@@ -76,6 +84,11 @@ impl Widen for i64 {
 
 impl Wide for i128 {
     type Narrow = i64;
+
+    #[inline]
+    fn zero() -> Self {
+        0
+    }
 
     #[inline]
     fn sign(&self) -> Ordering {

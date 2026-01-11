@@ -688,6 +688,209 @@ where
     p.x >= min_x && p.x <= max_x && p.y >= min_y && p.y <= max_y
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Polygon Area
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Computes twice the signed area of a simple polygon.
+///
+/// Uses the shoelace formula. Returns a positive value for counter-clockwise
+/// polygons and negative for clockwise. The result is exactly twice the area
+/// to avoid division and keep the result as an integer.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point2, ops::polygon_area_2x};
+///
+/// let square = vec![
+///     Point2::new(0_i64, 0),
+///     Point2::new(10, 0),
+///     Point2::new(10, 10),
+///     Point2::new(0, 10),
+/// ];
+/// assert_eq!(polygon_area_2x(&square), 200); // 2 * 100 = 200
+/// ```
+#[must_use]
+pub fn polygon_area_2x<T: Widen>(polygon: &[Point2<T>]) -> T::Wide
+where
+    T::Wide: Wide<Narrow = T>,
+{
+    let n = polygon.len();
+    if n < 3 {
+        return T::Wide::zero();
+    }
+
+    let mut sum = T::Wide::zero();
+    for i in 0..n {
+        let p1 = polygon[i];
+        let p2 = polygon[(i + 1) % n];
+        // Shoelace: sum of (x1 * y2 - x2 * y1)
+        let cross = p1.x.to_wide() * p2.y.to_wide() - p2.x.to_wide() * p1.y.to_wide();
+        sum = sum + cross;
+    }
+    sum
+}
+
+/// Computes the signed area of a simple polygon as a rational number.
+///
+/// Returns positive for counter-clockwise polygons, negative for clockwise.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point2, ops::polygon_area};
+///
+/// let square = vec![
+///     Point2::new(0_i64, 0),
+///     Point2::new(10, 0),
+///     Point2::new(10, 10),
+///     Point2::new(0, 10),
+/// ];
+/// let area = polygon_area(&square);
+/// assert_eq!(area.to_f64(), 100.0);
+/// ```
+#[must_use]
+pub fn polygon_area(polygon: &[Point2<i64>]) -> Rational {
+    let twice_area = polygon_area_2x(polygon);
+    Rational::new(twice_area, 2)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Polygon Centroid
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Computes the centroid of a simple polygon.
+///
+/// Returns the centroid as a point with rational coordinates. For a polygon
+/// with zero area (degenerate), returns `None`.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point2, ops::polygon_centroid};
+///
+/// let square = vec![
+///     Point2::new(0_i64, 0),
+///     Point2::new(10, 0),
+///     Point2::new(10, 10),
+///     Point2::new(0, 10),
+/// ];
+/// let centroid = polygon_centroid(&square).unwrap();
+/// let (x, y) = centroid.to_f64();
+/// assert!((x - 5.0).abs() < 0.001);
+/// assert!((y - 5.0).abs() < 0.001);
+/// ```
+#[must_use]
+pub fn polygon_centroid(polygon: &[Point2<i64>]) -> Option<RationalPoint> {
+    let n = polygon.len();
+    if n < 3 {
+        return None;
+    }
+
+    let mut sum_x: i128 = 0;
+    let mut sum_y: i128 = 0;
+    let mut area_2x: i128 = 0;
+
+    for i in 0..n {
+        let p1 = polygon[i];
+        let p2 = polygon[(i + 1) % n];
+
+        let x1 = p1.x as i128;
+        let y1 = p1.y as i128;
+        let x2 = p2.x as i128;
+        let y2 = p2.y as i128;
+
+        let cross = x1 * y2 - x2 * y1;
+        area_2x += cross;
+        sum_x += (x1 + x2) * cross;
+        sum_y += (y1 + y2) * cross;
+    }
+
+    if area_2x == 0 {
+        return None;
+    }
+
+    // Centroid = (sum_x / (3 * area_2x), sum_y / (3 * area_2x))
+    // = (sum_x, sum_y) / (3 * area_2x)
+    let denom = 3 * area_2x.abs();
+    let sign = if area_2x < 0 { -1 } else { 1 };
+
+    Some(RationalPoint::new(
+        Rational::new(sign * sum_x, denom),
+        Rational::new(sign * sum_y, denom),
+    ))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Convexity Test
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Tests if a simple polygon is convex.
+///
+/// A polygon is convex if all interior angles are less than 180 degrees,
+/// which is equivalent to all cross products of consecutive edges having
+/// the same sign.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point2, ops::is_convex};
+///
+/// let square = vec![
+///     Point2::new(0_i64, 0),
+///     Point2::new(10, 0),
+///     Point2::new(10, 10),
+///     Point2::new(0, 10),
+/// ];
+/// assert!(is_convex(&square));
+///
+/// // L-shaped polygon is not convex
+/// let l_shape = vec![
+///     Point2::new(0_i64, 0),
+///     Point2::new(10, 0),
+///     Point2::new(10, 5),
+///     Point2::new(5, 5),
+///     Point2::new(5, 10),
+///     Point2::new(0, 10),
+/// ];
+/// assert!(!is_convex(&l_shape));
+/// ```
+#[must_use]
+pub fn is_convex<T: Widen>(polygon: &[Point2<T>]) -> bool
+where
+    T::Wide: Wide<Narrow = T>,
+{
+    let n = polygon.len();
+    if n < 3 {
+        return false;
+    }
+
+    let mut sign: Option<Ordering> = None;
+
+    for i in 0..n {
+        let a = polygon[i];
+        let b = polygon[(i + 1) % n];
+        let c = polygon[(i + 2) % n];
+
+        let orientation = orient2d(a, b, c);
+
+        // Skip collinear edges
+        if orientation == Ordering::Equal {
+            continue;
+        }
+
+        match sign {
+            None => sign = Some(orientation),
+            Some(s) if s != orientation => return false,
+            _ => {}
+        }
+    }
+
+    // If all edges were collinear, it's degenerate (line), not convex
+    sign.is_some()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1083,5 +1286,158 @@ mod tests {
             point_in_polygon(Point2::new(0, 5), &triangle),
             Containment::Outside
         );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // polygon_area tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn polygon_area_2x_square() {
+        let square = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        assert_eq!(polygon_area_2x(&square), 200); // 2 * 100
+    }
+
+    #[test]
+    fn polygon_area_2x_triangle() {
+        let triangle = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        assert_eq!(polygon_area_2x(&triangle), 100); // 2 * 50
+    }
+
+    #[test]
+    fn polygon_area_2x_clockwise() {
+        // Clockwise square should give negative area
+        let square_cw = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(0, 10),
+            Point2::new(10, 10),
+            Point2::new(10, 0),
+        ];
+        assert_eq!(polygon_area_2x(&square_cw), -200);
+    }
+
+    #[test]
+    fn polygon_area_2x_i32() {
+        let square = vec![
+            Point2::new(0_i32, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        assert_eq!(polygon_area_2x(&square), 200_i64);
+    }
+
+    #[test]
+    fn polygon_area_rational() {
+        let square = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        let area = polygon_area(&square);
+        assert_eq!(area.to_f64(), 100.0);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // polygon_centroid tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn polygon_centroid_square() {
+        let square = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        let centroid = polygon_centroid(&square).unwrap();
+        let (x, y) = centroid.to_f64();
+        assert!((x - 5.0).abs() < 0.001, "x = {}", x);
+        assert!((y - 5.0).abs() < 0.001, "y = {}", y);
+    }
+
+    #[test]
+    fn polygon_centroid_triangle() {
+        let triangle = vec![Point2::new(0_i64, 0), Point2::new(9, 0), Point2::new(0, 9)];
+        let centroid = polygon_centroid(&triangle).unwrap();
+        let (x, y) = centroid.to_f64();
+        // Centroid of triangle is at (3, 3)
+        assert!((x - 3.0).abs() < 0.001, "x = {}", x);
+        assert!((y - 3.0).abs() < 0.001, "y = {}", y);
+    }
+
+    #[test]
+    fn polygon_centroid_degenerate() {
+        // Line (zero area)
+        let line = vec![Point2::new(0_i64, 0), Point2::new(10, 0), Point2::new(5, 0)];
+        assert!(polygon_centroid(&line).is_none());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // is_convex tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn is_convex_square() {
+        let square = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        assert!(is_convex(&square));
+    }
+
+    #[test]
+    fn is_convex_triangle() {
+        let triangle = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        assert!(is_convex(&triangle));
+    }
+
+    #[test]
+    fn is_convex_l_shape() {
+        let l_shape = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 5),
+            Point2::new(5, 5),
+            Point2::new(5, 10),
+            Point2::new(0, 10),
+        ];
+        assert!(!is_convex(&l_shape));
+    }
+
+    #[test]
+    fn is_convex_with_collinear() {
+        // Square with a point on an edge (still convex)
+        let square_with_midpoint = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(5, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+        ];
+        assert!(is_convex(&square_with_midpoint));
+    }
+
+    #[test]
+    fn is_convex_degenerate() {
+        // All collinear points - not convex
+        let line = vec![Point2::new(0_i64, 0), Point2::new(5, 0), Point2::new(10, 0)];
+        assert!(!is_convex(&line));
     }
 }
