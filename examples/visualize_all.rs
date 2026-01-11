@@ -162,7 +162,18 @@ fn generate_quadtree() -> String {
 
     // Draw quadtree cells by computing subdivisions
     svg.push_str("  <g stroke=\"#2196F3\" stroke-width=\"1\" fill=\"none\">\n");
-    draw_quadtree_cells(&mut svg, &points, min_x, min_y, max_x, max_y, 4, 0);
+    draw_quadtree_cells(
+        &mut svg,
+        &points,
+        QuadBounds {
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+        },
+        4,
+        0,
+    );
     svg.push_str("  </g>\n");
 
     // Draw points
@@ -179,16 +190,26 @@ fn generate_quadtree() -> String {
     svg
 }
 
-fn draw_quadtree_cells(
-    svg: &mut String,
-    points: &[Point2<i64>],
+struct QuadBounds {
     min_x: i64,
     min_y: i64,
     max_x: i64,
     max_y: i64,
+}
+
+fn draw_quadtree_cells(
+    svg: &mut String,
+    points: &[Point2<i64>],
+    bounds: QuadBounds,
     bucket_capacity: usize,
     depth: usize,
 ) {
+    let QuadBounds {
+        min_x,
+        min_y,
+        max_x,
+        max_y,
+    } = bounds;
     // Draw this cell's bounds
     let w = max_x - min_x;
     let h = max_y - min_y;
@@ -218,10 +239,12 @@ fn draw_quadtree_cells(
         draw_quadtree_cells(
             svg,
             points,
-            min_x,
-            min_y,
-            mid_x,
-            mid_y,
+            QuadBounds {
+                min_x,
+                min_y,
+                max_x: mid_x,
+                max_y: mid_y,
+            },
             bucket_capacity,
             depth + 1,
         );
@@ -229,10 +252,12 @@ fn draw_quadtree_cells(
         draw_quadtree_cells(
             svg,
             points,
-            mid_x,
-            min_y,
-            max_x,
-            mid_y,
+            QuadBounds {
+                min_x: mid_x,
+                min_y,
+                max_x,
+                max_y: mid_y,
+            },
             bucket_capacity,
             depth + 1,
         );
@@ -240,10 +265,12 @@ fn draw_quadtree_cells(
         draw_quadtree_cells(
             svg,
             points,
-            min_x,
-            mid_y,
-            mid_x,
-            max_y,
+            QuadBounds {
+                min_x,
+                min_y: mid_y,
+                max_x: mid_x,
+                max_y,
+            },
             bucket_capacity,
             depth + 1,
         );
@@ -251,10 +278,12 @@ fn draw_quadtree_cells(
         draw_quadtree_cells(
             svg,
             points,
-            mid_x,
-            mid_y,
-            max_x,
-            max_y,
+            QuadBounds {
+                min_x: mid_x,
+                min_y: mid_y,
+                max_x,
+                max_y,
+            },
             bucket_capacity,
             depth + 1,
         );

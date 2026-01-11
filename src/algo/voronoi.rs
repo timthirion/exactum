@@ -293,8 +293,8 @@ mod tests {
 
         // Circumcenter should be at (5, 5) - midpoint of hypotenuse
         // Check exactly: x = 5/1, y = 5/1
-        assert_eq!(cc.x.num * 1, 5 * cc.x.denom);
-        assert_eq!(cc.y.num * 1, 5 * cc.y.denom);
+        assert_eq!(cc.x.num, 5 * cc.x.denom);
+        assert_eq!(cc.y.num, 5 * cc.y.denom);
     }
 
     #[test]

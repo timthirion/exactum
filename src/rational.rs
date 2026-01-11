@@ -151,11 +151,11 @@ mod tests {
 
         // 1/2 - 1/3 = 1/6
         let diff = a - b;
-        assert_eq!(diff.num * 6, 1 * diff.denom);
+        assert_eq!(diff.num * 6, diff.denom);
 
         // 1/2 * 1/3 = 1/6
         let prod = a * b;
-        assert_eq!(prod.num * 6, 1 * prod.denom);
+        assert_eq!(prod.num * 6, prod.denom);
 
         // -1/2
         let neg = -a;

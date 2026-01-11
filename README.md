@@ -1,5 +1,7 @@
 # exactum
 
+[![CI](https://github.com/timthirion/exactum/actions/workflows/ci.yml/badge.svg)](https://github.com/timthirion/exactum/actions/workflows/ci.yml)
+
 "God created the integers; all else is the work of man." - Leopold Kronecker
 
 Exact computational geometry in Rust. No floating-point. No approximations.
