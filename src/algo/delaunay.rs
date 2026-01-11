@@ -1,9 +1,14 @@
 //! Delaunay triangulation using the Bowyer-Watson algorithm.
 
+use std::cell::OnceCell;
 use std::cmp::Ordering;
 
+use crate::ops::{point_in_triangle, Containment};
 use crate::predicates::{incircle, orient2d};
 use crate::Point2;
+
+use super::quadtree::Bounds;
+use super::rtree::{RTree, RTreeEntry};
 
 /// A triangle represented by indices into a point array.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -42,6 +47,8 @@ pub struct Triangulation {
     pub points: Vec<Point2<i64>>,
     /// The triangles, each storing indices into `points`.
     pub triangles: Vec<Triangle>,
+    /// Lazy-built spatial index for point location queries.
+    location_index: OnceCell<RTree>,
 }
 
 impl Triangulation {
@@ -53,6 +60,91 @@ impl Triangulation {
                 self.points[t.vertices[1]],
                 self.points[t.vertices[2]],
             ]
+        })
+    }
+
+    /// Finds the triangle containing the query point.
+    ///
+    /// Returns the triangle index, or `None` if the point is outside all triangles.
+    /// Uses a spatial index for O(log n) expected query time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use exactum::{Point2, algo::delaunay};
+    ///
+    /// let points = vec![
+    ///     Point2::new(0_i64, 0),
+    ///     Point2::new(10, 0),
+    ///     Point2::new(5, 10),
+    /// ];
+    /// let tri = delaunay(&points).unwrap();
+    ///
+    /// // Point inside the triangle
+    /// assert!(tri.locate(Point2::new(5, 3)).is_some());
+    ///
+    /// // Point outside the triangle
+    /// assert!(tri.locate(Point2::new(100, 100)).is_none());
+    /// ```
+    #[must_use]
+    pub fn locate(&self, query: Point2<i64>) -> Option<usize> {
+        if self.triangles.is_empty() {
+            return None;
+        }
+
+        let index = self.get_or_build_index();
+
+        // Query R-tree for triangles whose bounding box contains the point
+        let candidates = index.contains_point(query);
+
+        // Test each candidate with exact point-in-triangle test
+        for tri_idx in candidates {
+            let tri = &self.triangles[tri_idx];
+            let a = self.points[tri.vertices[0]];
+            let b = self.points[tri.vertices[1]];
+            let c = self.points[tri.vertices[2]];
+
+            if point_in_triangle(query, a, b, c) != Containment::Outside {
+                return Some(tri_idx);
+            }
+        }
+
+        None
+    }
+
+    /// Returns true if the point is inside any triangle.
+    ///
+    /// Equivalent to `self.locate(query).is_some()`.
+    #[must_use]
+    pub fn contains(&self, query: Point2<i64>) -> bool {
+        self.locate(query).is_some()
+    }
+
+    /// Builds or retrieves the spatial index for point location.
+    fn get_or_build_index(&self) -> &RTree {
+        self.location_index.get_or_init(|| {
+            let entries: Vec<RTreeEntry> = self
+                .triangles
+                .iter()
+                .enumerate()
+                .map(|(i, tri)| {
+                    let a = self.points[tri.vertices[0]];
+                    let b = self.points[tri.vertices[1]];
+                    let c = self.points[tri.vertices[2]];
+
+                    let min_x = a.x.min(b.x).min(c.x);
+                    let min_y = a.y.min(b.y).min(c.y);
+                    let max_x = a.x.max(b.x).max(c.x);
+                    let max_y = a.y.max(b.y).max(c.y);
+
+                    RTreeEntry::new(
+                        Bounds::new(Point2::new(min_x, min_y), Point2::new(max_x, max_y)),
+                        i,
+                    )
+                })
+                .collect();
+
+            RTree::new(&entries)
         })
     }
 }
@@ -177,6 +269,7 @@ pub fn delaunay(points: &[Point2<i64>]) -> Option<Triangulation> {
     Some(Triangulation {
         points: points.to_vec(),
         triangles,
+        location_index: OnceCell::new(),
     })
 }
 
@@ -321,5 +414,95 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn locate_inside_single_triangle() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        let tri = delaunay(&points).unwrap();
+
+        // Point inside the triangle
+        let result = tri.locate(Point2::new(5, 3));
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), 0);
+    }
+
+    #[test]
+    fn locate_outside_triangulation() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        let tri = delaunay(&points).unwrap();
+
+        // Point outside
+        assert!(tri.locate(Point2::new(100, 100)).is_none());
+        assert!(tri.locate(Point2::new(-10, -10)).is_none());
+    }
+
+    #[test]
+    fn locate_on_vertex() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        let tri = delaunay(&points).unwrap();
+
+        // Point on vertex should be inside
+        assert!(tri.locate(Point2::new(0, 0)).is_some());
+        assert!(tri.locate(Point2::new(10, 0)).is_some());
+        assert!(tri.locate(Point2::new(5, 10)).is_some());
+    }
+
+    #[test]
+    fn locate_on_edge() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        let tri = delaunay(&points).unwrap();
+
+        // Point on edge should be inside
+        assert!(tri.locate(Point2::new(5, 0)).is_some()); // midpoint of bottom edge
+    }
+
+    #[test]
+    fn locate_in_multi_triangle_mesh() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(10, 10),
+            Point2::new(0, 10),
+            Point2::new(5, 5),
+        ];
+        let tri = delaunay(&points).unwrap();
+        assert_eq!(tri.triangles.len(), 4);
+
+        // All interior points should be locatable
+        assert!(tri.locate(Point2::new(2, 2)).is_some());
+        assert!(tri.locate(Point2::new(8, 2)).is_some());
+        assert!(tri.locate(Point2::new(8, 8)).is_some());
+        assert!(tri.locate(Point2::new(2, 8)).is_some());
+        assert!(tri.locate(Point2::new(5, 5)).is_some());
+    }
+
+    #[test]
+    fn contains_method() {
+        let points = vec![
+            Point2::new(0_i64, 0),
+            Point2::new(10, 0),
+            Point2::new(5, 10),
+        ];
+        let tri = delaunay(&points).unwrap();
+
+        assert!(tri.contains(Point2::new(5, 3)));
+        assert!(!tri.contains(Point2::new(100, 100)));
     }
 }
