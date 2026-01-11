@@ -4,9 +4,7 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-use exactum::algo::{
-    delaunay, Bounds, KdTree2, KdTree3, Octree, Quadtree, RTree, RTreeEntry,
-};
+use exactum::algo::{delaunay, Bounds, KdTree2, KdTree3, Octree, Quadtree, RTree, RTreeEntry};
 use exactum::{Point2, Point3};
 
 const SIZES: [usize; 4] = [100, 1_000, 10_000, 100_000];
@@ -40,10 +38,7 @@ fn generate_rtree_entries(n: usize, seed: u64) -> Vec<RTreeEntry> {
             let y = rng.gen_range(0..10_000);
             let w = rng.gen_range(10..100);
             let h = rng.gen_range(10..100);
-            RTreeEntry::new(
-                Bounds::new(Point2::new(x, y), Point2::new(x + w, y + h)),
-                i,
-            )
+            RTreeEntry::new(Bounds::new(Point2::new(x, y), Point2::new(x + w, y + h)), i)
         })
         .collect()
 }
@@ -293,11 +288,7 @@ criterion_group!(
 
 criterion_group!(octree_queries, bench_octree_nearest, bench_octree_range,);
 
-criterion_group!(
-    rtree_queries,
-    bench_rtree_query,
-    bench_rtree_nearest,
-);
+criterion_group!(rtree_queries, bench_rtree_query, bench_rtree_nearest,);
 
 criterion_group!(triangulation_queries, bench_triangulation_locate,);
 
