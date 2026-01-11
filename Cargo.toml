@@ -10,3 +10,4 @@ rust-version = "1.70"
 [dependencies]
 
 [dev-dependencies]
+rand = "0.8"
