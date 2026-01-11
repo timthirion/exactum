@@ -11,3 +11,4 @@ rust-version = "1.70"
 
 [dev-dependencies]
 rand = "0.8"
+fast_poisson = "1.0"

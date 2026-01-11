@@ -7,6 +7,7 @@
 //!   --points N      Number of random points (default: 20)
 //!   --size S        Domain size, points in [10, S-10] (default: 500)
 //!   --seed S        Random seed (default: random)
+//!   --blue-noise    Use Poisson disk sampling for better point distribution
 //!   --delaunay      Show Delaunay triangulation (default: on)
 //!   --voronoi       Show Voronoi diagram (default: off)
 //!   --circumcircles Show circumcircles (default: off)
@@ -16,6 +17,7 @@
 
 use std::env;
 
+use fast_poisson::Poisson2D;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
@@ -26,6 +28,7 @@ struct Config {
     num_points: usize,
     size: i64,
     seed: Option<u64>,
+    blue_noise: bool,
     show_delaunay: bool,
     show_voronoi: bool,
     show_circumcircles: bool,
@@ -38,6 +41,7 @@ impl Default for Config {
             num_points: 20,
             size: 500,
             seed: None,
+            blue_noise: false,
             show_delaunay: true,
             show_voronoi: false,
             show_circumcircles: false,
@@ -78,6 +82,7 @@ fn parse_args() -> Result<Config, String> {
                         .map_err(|_| "Invalid number for --seed")?,
                 );
             }
+            "--blue-noise" => config.blue_noise = true,
             "--delaunay" => config.show_delaunay = true,
             "--voronoi" => config.show_voronoi = true,
             "--circumcircles" => config.show_circumcircles = true,
@@ -106,6 +111,7 @@ Options:
   --points N      Number of random points (default: 20)
   --size S        Domain size, points in [10, S-10] (default: 500)
   --seed S        Random seed (default: random)
+  --blue-noise    Use Poisson disk sampling for better distribution
   --delaunay      Show Delaunay triangulation (default: on)
   --voronoi       Show Voronoi diagram (default: off)
   --circumcircles Show circumcircles around triangles (default: off)
@@ -117,27 +123,51 @@ Examples:
   cargo run --example visualize -- --points 30 > tri.svg
   cargo run --example visualize -- --voronoi --no-delaunay > voronoi.svg
   cargo run --example visualize -- --voronoi --points 50 --seed 42 > both.svg
-  cargo run --example visualize -- --circumcircles --seed 42 > circles.svg"#
+  cargo run --example visualize -- --circumcircles --seed 42 > circles.svg
+  cargo run --example visualize -- --blue-noise --voronoi > bluenoise.svg"#
     );
 }
 
 fn generate_points(config: &Config) -> Vec<Point2<i64>> {
-    let mut rng: StdRng = match config.seed {
-        Some(seed) => StdRng::seed_from_u64(seed),
-        None => StdRng::from_entropy(),
-    };
-
     let margin = 10;
-    let min = margin;
-    let max = config.size - margin;
+    let min = margin as f64;
+    let max = (config.size - margin) as f64;
+    let range = max - min;
 
-    (0..config.num_points)
-        .map(|_| {
-            let x = rng.gen_range(min..max);
-            let y = rng.gen_range(min..max);
-            Point2::new(x, y)
-        })
-        .collect()
+    if config.blue_noise {
+        // Use Poisson disk sampling for blue noise distribution
+        // Calculate radius to get approximately the desired number of points
+        // Area = range^2, each point "occupies" roughly pi*r^2 area
+        // So n ≈ area / (pi * r^2), solving for r: r ≈ sqrt(area / (pi * n))
+        let area = range * range;
+        let radius = (area / (std::f64::consts::PI * config.num_points as f64)).sqrt();
+
+        let mut poisson = Poisson2D::new();
+        if let Some(seed) = config.seed {
+            poisson = poisson.with_seed(seed);
+        }
+
+        poisson
+            .with_dimensions([range, range], radius)
+            .iter()
+            .take(config.num_points)
+            .map(|[x, y]| Point2::new((x + min) as i64, (y + min) as i64))
+            .collect()
+    } else {
+        // Uniform random sampling
+        let mut rng: StdRng = match config.seed {
+            Some(seed) => StdRng::seed_from_u64(seed),
+            None => StdRng::from_entropy(),
+        };
+
+        (0..config.num_points)
+            .map(|_| {
+                let x = rng.gen_range(min as i64..max as i64);
+                let y = rng.gen_range(min as i64..max as i64);
+                Point2::new(x, y)
+            })
+            .collect()
+    }
 }
 
 /// Clip a line segment to the viewport [0, size] x [0, size].
