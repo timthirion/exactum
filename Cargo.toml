@@ -1,0 +1,12 @@
+[package]
+name = "exactum"
+description = "Exact geometric predicates and algorithms using integer arithmetic"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/timthirion/exactum"
+rust-version = "1.70"
+
+[dependencies]
+
+[dev-dependencies]
