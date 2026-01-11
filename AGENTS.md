@@ -16,6 +16,19 @@ Use official Rust style conventions:
 - Run `cargo fmt` and `cargo clippy` before committing
 - Follow [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 
+### Comments
+
+Follow standard Rust documentation conventions:
+- Use `///` for doc comments on public items (functions, structs, enums, etc.)
+- Use `//!` for module-level documentation at the top of files
+- Use `//` for implementation notes and inline comments
+- Doc comments should explain *what* something does, not *how*
+- Keep comments concise; let the code speak for itself where possible
+
+**Do not use:**
+- Segmentation comments or visual dividers (e.g., `// ─────────` or `// =====`)
+- Banner-style comment blocks to separate sections
+
 ## Module Structure
 
 ```
