@@ -6,10 +6,10 @@
 
 use std::cmp::Ordering;
 
-use crate::predicates::orient2d;
+use crate::predicates::{orient2d, orient3d};
 use crate::rational::Rational;
 use crate::widen::{Wide, Widen};
-use crate::{Point2, Vector2};
+use crate::{Point2, Point3, Vector2};
 
 /// A point with exact rational coordinates.
 ///
@@ -116,6 +116,30 @@ where
     dx.clone() * dx + dy.clone() * dy
 }
 
+/// Computes the squared distance between two 3D points.
+///
+/// Returns the result in the widened type to avoid overflow.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point3, ops::distance_squared_3d};
+///
+/// let a = Point3::new(0_i64, 0, 0);
+/// let b = Point3::new(1, 2, 2);
+/// assert_eq!(distance_squared_3d(a, b), 9_i128); // 1² + 2² + 2² = 9
+/// ```
+#[must_use]
+pub fn distance_squared_3d<T: Widen>(a: Point3<T>, b: Point3<T>) -> T::Wide
+where
+    T::Wide: Wide<Narrow = T>,
+{
+    let dx = b.x.to_wide() - a.x.to_wide();
+    let dy = b.y.to_wide() - a.y.to_wide();
+    let dz = b.z.to_wide() - a.z.to_wide();
+    dx.clone() * dx + dy.clone() * dy + dz.clone() * dz
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Point-in-Triangle
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,6 +206,85 @@ where
         Containment::Inside
     } else {
         Containment::Outside
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Point-in-Tetrahedron (3D)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Tests if a point lies inside, outside, or on the boundary of a tetrahedron.
+///
+/// The tetrahedron is defined by four vertices `a`, `b`, `c`, `d`.
+///
+/// # Example
+///
+/// ```
+/// use exactum::{Point3, ops::{point_in_tetrahedron, Containment}};
+///
+/// let a = Point3::new(0_i64, 0, 0);
+/// let b = Point3::new(10, 0, 0);
+/// let c = Point3::new(0, 10, 0);
+/// let d = Point3::new(0, 0, 10);
+///
+/// // Point inside
+/// assert_eq!(point_in_tetrahedron(Point3::new(1, 1, 1), a, b, c, d), Containment::Inside);
+/// // Vertex
+/// assert_eq!(point_in_tetrahedron(a, a, b, c, d), Containment::OnBoundary);
+/// // Outside
+/// assert_eq!(point_in_tetrahedron(Point3::new(10, 10, 10), a, b, c, d), Containment::Outside);
+/// ```
+#[must_use]
+pub fn point_in_tetrahedron(
+    p: Point3<i64>,
+    a: Point3<i64>,
+    b: Point3<i64>,
+    c: Point3<i64>,
+    d: Point3<i64>,
+) -> Containment {
+    // Check orientation of the tetrahedron to determine expected signs
+    let tet_orient = orient3d(a, b, c, d);
+
+    if tet_orient == Ordering::Equal {
+        // Degenerate tetrahedron (coplanar vertices)
+        return Containment::Outside;
+    }
+
+    // For each face, check which side p is on relative to the opposite vertex
+    // The key insight: for p to be inside, it must be on the same side of each face
+    // as the opposite vertex.
+
+    // Get the expected sign for each face (sign of opposite vertex relative to face)
+    let d_side = tet_orient; // orient3d(a,b,c,d) - d's position relative to ABC
+    let c_side = orient3d(a, b, d, c); // c's position relative to ABD
+    let b_side = orient3d(a, c, d, b); // b's position relative to ACD
+    let a_side = orient3d(b, c, d, a); // a's position relative to BCD
+
+    // Get p's position relative to each face
+    let o_abc = orient3d(a, b, c, p);
+    let o_abd = orient3d(a, b, d, p);
+    let o_acd = orient3d(a, c, d, p);
+    let o_bcd = orient3d(b, c, d, p);
+
+    // Check each face
+    let abc_ok = o_abc == d_side || o_abc == Ordering::Equal;
+    let abd_ok = o_abd == c_side || o_abd == Ordering::Equal;
+    let acd_ok = o_acd == b_side || o_acd == Ordering::Equal;
+    let bcd_ok = o_bcd == a_side || o_bcd == Ordering::Equal;
+
+    if !abc_ok || !abd_ok || !acd_ok || !bcd_ok {
+        return Containment::Outside;
+    }
+
+    // If any orientation is zero, point is on boundary
+    if o_abc == Ordering::Equal
+        || o_abd == Ordering::Equal
+        || o_acd == Ordering::Equal
+        || o_bcd == Ordering::Equal
+    {
+        Containment::OnBoundary
+    } else {
+        Containment::Inside
     }
 }
 
@@ -1439,5 +1542,89 @@ mod tests {
         // All collinear points - not convex
         let line = vec![Point2::new(0_i64, 0), Point2::new(5, 0), Point2::new(10, 0)];
         assert!(!is_convex(&line));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3D operations tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn distance_squared_3d_basic() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(1, 2, 2);
+        assert_eq!(distance_squared_3d(a, b), 9_i128); // 1 + 4 + 4 = 9
+    }
+
+    #[test]
+    fn distance_squared_3d_same_point() {
+        let a = Point3::new(5_i64, 5, 5);
+        assert_eq!(distance_squared_3d(a, a), 0_i128);
+    }
+
+    #[test]
+    fn distance_squared_3d_i32() {
+        let a = Point3::new(0_i32, 0, 0);
+        let b = Point3::new(1, 2, 2);
+        assert_eq!(distance_squared_3d(a, b), 9_i64);
+    }
+
+    #[test]
+    fn point_in_tetrahedron_inside() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(10, 0, 0);
+        let c = Point3::new(0, 10, 0);
+        let d = Point3::new(0, 0, 10);
+        assert_eq!(
+            point_in_tetrahedron(Point3::new(1, 1, 1), a, b, c, d),
+            Containment::Inside
+        );
+    }
+
+    #[test]
+    fn point_in_tetrahedron_outside() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(10, 0, 0);
+        let c = Point3::new(0, 10, 0);
+        let d = Point3::new(0, 0, 10);
+        assert_eq!(
+            point_in_tetrahedron(Point3::new(10, 10, 10), a, b, c, d),
+            Containment::Outside
+        );
+    }
+
+    #[test]
+    fn point_in_tetrahedron_on_vertex() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(10, 0, 0);
+        let c = Point3::new(0, 10, 0);
+        let d = Point3::new(0, 0, 10);
+        assert_eq!(point_in_tetrahedron(a, a, b, c, d), Containment::OnBoundary);
+        assert_eq!(point_in_tetrahedron(b, a, b, c, d), Containment::OnBoundary);
+    }
+
+    #[test]
+    fn point_in_tetrahedron_on_face() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(10, 0, 0);
+        let c = Point3::new(0, 10, 0);
+        let d = Point3::new(0, 0, 10);
+        // Point on face ABC (z=0)
+        assert_eq!(
+            point_in_tetrahedron(Point3::new(3, 3, 0), a, b, c, d),
+            Containment::OnBoundary
+        );
+    }
+
+    #[test]
+    fn point_in_tetrahedron_on_edge() {
+        let a = Point3::new(0_i64, 0, 0);
+        let b = Point3::new(10, 0, 0);
+        let c = Point3::new(0, 10, 0);
+        let d = Point3::new(0, 0, 10);
+        // Point on edge AB
+        assert_eq!(
+            point_in_tetrahedron(Point3::new(5, 0, 0), a, b, c, d),
+            Containment::OnBoundary
+        );
     }
 }
