@@ -17,6 +17,7 @@
 //! # Algorithms
 //!
 //! - [`algo::graham_scan`] - Convex hull via Graham scan
+//! - [`algo::delaunay`] - Delaunay triangulation via Bowyer-Watson
 //!
 //! # Traits
 //!
