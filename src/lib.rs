@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 //! Exact geometric predicates and algorithms using integer arithmetic.
 //!
 //! Exactum provides robust computational geometry primitives that use exact
