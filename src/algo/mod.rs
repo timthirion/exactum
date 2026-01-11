@@ -3,6 +3,7 @@
 pub mod boolean;
 mod convex_hull;
 mod delaunay;
+pub mod sweep;
 mod voronoi;
 
 pub use convex_hull::graham_scan;
