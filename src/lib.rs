@@ -25,12 +25,15 @@
 //! - [`Widen`] - Integer widening for overflow-safe multiplication
 
 mod point;
+mod rational;
 mod vector;
 mod widen;
 
 pub mod algo;
+pub mod ops;
 pub mod predicates;
 
 pub use point::{Point2, Point3};
+pub use rational::Rational;
 pub use vector::{Vector2, Vector3};
 pub use widen::{Wide, Widen};
