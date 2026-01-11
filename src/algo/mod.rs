@@ -1,5 +1,6 @@
 //! Computational geometry algorithms.
 
+pub mod boolean;
 mod convex_hull;
 mod delaunay;
 mod voronoi;

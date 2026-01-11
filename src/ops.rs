@@ -38,6 +38,24 @@ impl RationalPoint {
     pub fn to_f64(self) -> (f64, f64) {
         (self.x.to_f64(), self.y.to_f64())
     }
+
+    /// Compares x-coordinates of two rational points.
+    pub fn cmp_x(&self, other: &Self) -> Ordering {
+        self.x.cmp(&other.x)
+    }
+
+    /// Compares y-coordinates of two rational points.
+    pub fn cmp_y(&self, other: &Self) -> Ordering {
+        self.y.cmp(&other.y)
+    }
+
+    /// Lexicographic comparison: first by x, then by y.
+    pub fn cmp_lex(&self, other: &Self) -> Ordering {
+        match self.x.cmp(&other.x) {
+            Ordering::Equal => self.y.cmp(&other.y),
+            ord => ord,
+        }
+    }
 }
 
 /// Result of a containment test.

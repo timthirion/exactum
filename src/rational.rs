@@ -4,7 +4,7 @@
 //! are not sufficient.
 
 use std::cmp::Ordering;
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A rational number represented as numerator/denominator.
 ///
@@ -117,6 +117,22 @@ impl Mul for Rational {
             num: self.num * other.num,
             denom: self.denom * other.denom,
         }
+    }
+}
+
+impl Div for Rational {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        // a/b / c/d = a/b * d/c = (a*d) / (b*c)
+        // Handle sign: if other.num is negative, flip sign of result
+        let (num, denom) = if other.num < 0 {
+            (-self.num * other.denom, self.denom * (-other.num))
+        } else {
+            (self.num * other.denom, self.denom * other.num)
+        };
+        debug_assert!(denom > 0, "Division by zero or invalid denominator");
+        Self { num, denom }
     }
 }
 
