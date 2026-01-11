@@ -14,6 +14,10 @@
 //! - [`predicates::incircle`] - In-circle test for four 2D points
 //! - [`predicates::collinear`] - Collinearity test
 //!
+//! # Algorithms
+//!
+//! - [`algo::graham_scan`] - Convex hull via Graham scan
+//!
 //! # Traits
 //!
 //! - [`Widen`] - Integer widening for overflow-safe multiplication
@@ -22,6 +26,7 @@ mod point;
 mod vector;
 mod widen;
 
+pub mod algo;
 pub mod predicates;
 
 pub use point::{Point2, Point3};
