@@ -1,18 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400">
-  <rect width="960" height="400" fill="white"/>
-  <line x1="320" y1="0" x2="320" y2="400" stroke="#ddd" stroke-width="1"/>
-  <line x1="640" y1="0" x2="640" y2="400" stroke="#ddd" stroke-width="1"/>
-  <text x="160" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#333">Union</text>
-  <text x="480" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#333">Intersection</text>
-  <text x="800" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#333">Difference</text>
-  <polygon points="180,80 215,152 294,163 237,218 250,297 180,260 110,297 123,218 66,163 145,152" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(0, 40)"/>
-  <polygon points="280,160 366,210 366,309 280,360 194,310 194,210" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(0, 40)"/>
-  <polygon points="180.0,80.0 215.0,152.0 278.5,160.8 280.0,160.0 282.4,161.4 294.0,163.0 290.7,166.2 366.0,210.0 366.0,309.0 280.0,360.0 194.0,310.0 194.0,267.4 180.0,260.0 110.0,297.0 123.0,218.0 66.0,163.0 145.0,152.0" fill="#4CAF50" fill-opacity="0.4" stroke="#4CAF50" stroke-width="2" transform="translate(0, 40)"/>
-  <polygon points="180,80 215,152 294,163 237,218 250,297 180,260 110,297 123,218 66,163 145,152" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(320, 40)"/>
-  <polygon points="280,160 366,210 366,309 280,360 194,310 194,210" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(320, 40)"/>
-  <polygon points="278.5,160.8 282.4,161.4 290.7,166.2 237.0,218.0 250.0,297.0 194.0,267.4 194.0,210.0" fill="#2196F3" fill-opacity="0.4" stroke="#2196F3" stroke-width="2" transform="translate(320, 40)"/>
-  <polygon points="180,80 215,152 294,163 237,218 250,297 180,260 110,297 123,218 66,163 145,152" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(640, 40)"/>
-  <polygon points="280,160 366,210 366,309 280,360 194,310 194,210" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(640, 40)"/>
-  <polygon points="180.0,80.0 215.0,152.0 278.5,160.8 194.0,210.0 194.0,267.4 180.0,260.0 110.0,297.0 123.0,218.0 66.0,163.0 145.0,152.0" fill="#FF9800" fill-opacity="0.4" stroke="#FF9800" stroke-width="2" transform="translate(640, 40)"/>
-  <polygon points="282.4,161.4 294.0,163.0 290.7,166.2" fill="#FF9800" fill-opacity="0.4" stroke="#FF9800" stroke-width="2" transform="translate(640, 40)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" width="800" height="350">
+  <rect width="800" height="350" fill="#1a1a2e"/>
+  <line x1="266" y1="0" x2="266" y2="350" stroke="#3d3d5c" stroke-width="1"/>
+  <line x1="532" y1="0" x2="532" y2="350" stroke="#3d3d5c" stroke-width="1"/>
+  <text x="133" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">Union</text>
+  <text x="399" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">Intersection</text>
+  <text x="665" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">Difference</text>
+  <polygon points="100,70 120,112 166,119 133,150 141,196 100,175 59,196 67,150 34,119 80,112" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(0, 40)"/>
+  <polygon points="160,115 211,145 211,204 160,235 109,205 109,145" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(0, 40)"/>
+  <polygon points="100.0,70.0 120.0,112.0 155.8,117.5 160.0,115.0 211.0,145.0 211.0,204.0 160.0,235.0 109.0,205.0 109.0,179.6 100.0,175.0 59.0,196.0 67.0,150.0 34.0,119.0 80.0,112.0" fill="#4CAF50" fill-opacity="0.4" stroke="#4CAF50" stroke-width="2" transform="translate(0, 40)"/>
+  <polygon points="100,70 120,112 166,119 133,150 141,196 100,175 59,196 67,150 34,119 80,112" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(266, 40)"/>
+  <polygon points="160,115 211,145 211,204 160,235 109,205 109,145" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(266, 40)"/>
+  <polygon points="155.8,117.5 166.0,119.0 133.0,150.0 141.0,196.0 109.0,179.6 109.0,145.0" fill="#2196F3" fill-opacity="0.4" stroke="#2196F3" stroke-width="2" transform="translate(266, 40)"/>
+  <polygon points="100,70 120,112 166,119 133,150 141,196 100,175 59,196 67,150 34,119 80,112" fill="rgba(233, 30, 99, 0.1)" stroke="#E91E63" stroke-width="1" stroke-dasharray="4,4" transform="translate(532, 40)"/>
+  <polygon points="160,115 211,145 211,204 160,235 109,205 109,145" fill="rgba(156, 39, 176, 0.1)" stroke="#9C27B0" stroke-width="1" stroke-dasharray="4,4" transform="translate(532, 40)"/>
+  <polygon points="100.0,70.0 120.0,112.0 155.8,117.5 109.0,145.0 109.0,179.6 100.0,175.0 59.0,196.0 67.0,150.0 34.0,119.0 80.0,112.0" fill="#FF9800" fill-opacity="0.4" stroke="#FF9800" stroke-width="2" transform="translate(532, 40)"/>
 </svg>

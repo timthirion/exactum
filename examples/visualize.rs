@@ -235,7 +235,7 @@ fn render_svg(
 
     // Background
     svg.push_str(&format!(
-        r#"  <rect width="{}" height="{}" fill="white"/>"#,
+        "  <rect width=\"{}\" height=\"{}\" fill=\"#1a1a2e\"/>",
         config.size, config.size
     ));
     svg.push('\n');
@@ -243,7 +243,7 @@ fn render_svg(
     // Voronoi edges (draw first so they're behind)
     if config.show_voronoi {
         if let Some(v) = voronoi {
-            svg.push_str("  <g stroke=\"#2196F3\" stroke-width=\"1.5\" fill=\"none\">\n");
+            svg.push_str("  <g stroke=\"#e74c3c\" stroke-width=\"1.5\" fill=\"none\">\n");
             for edge in &v.edges {
                 let (x1, y1, x2, y2) = if let (Some(start), Some(end)) = (edge.start, edge.end) {
                     let (x1, y1) = v.vertices[start].to_f64();
@@ -309,7 +309,7 @@ fn render_svg(
     // Circumcircles (draw before triangles so they're behind)
     if config.show_circumcircles {
         if let Some(v) = voronoi {
-            svg.push_str("  <g stroke=\"#ddd\" stroke-width=\"1\" fill=\"none\">\n");
+            svg.push_str("  <g stroke=\"#3d3d5c\" stroke-width=\"1\" fill=\"none\">\n");
             for (i, tri) in triangulation.triangles.iter().enumerate() {
                 let (cx, cy) = v.vertices[i].to_f64();
 
@@ -333,7 +333,7 @@ fn render_svg(
 
     // Delaunay edges
     if config.show_delaunay {
-        svg.push_str("  <g stroke=\"#333\" stroke-width=\"1\" fill=\"none\">\n");
+        svg.push_str("  <g stroke=\"#3498db\" stroke-width=\"1\" fill=\"none\">\n");
         for tri in &triangulation.triangles {
             let [a, b, c] = tri.vertices;
             let pa = triangulation.points[a];
@@ -363,7 +363,7 @@ fn render_svg(
     // Voronoi vertices (small dots)
     if config.show_voronoi {
         if let Some(v) = voronoi {
-            svg.push_str("  <g fill=\"#2196F3\">\n");
+            svg.push_str("  <g fill=\"#e74c3c\">\n");
             for vertex in &v.vertices {
                 let (x, y) = vertex.to_f64();
                 // Only draw if within bounds
